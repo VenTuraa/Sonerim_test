@@ -39,10 +39,10 @@ public class ModelsContainer
     public Model[] Models;
 }
 
-public class ModelManager : MonoBehaviour
+public class AssetLoader : MonoBehaviour
 {
     private ModelsContainer modelsContainer;
-
+[SerializeField] private HotObjectHighlighter highlighter;
     [TextArea(5, 20)]
     public string json;
 
@@ -56,6 +56,7 @@ public class ModelManager : MonoBehaviour
     public void LoadJSON(string jsonText)
     {
         modelsContainer = JsonConvert.DeserializeObject<ModelsContainer>(jsonText);
+        highlighter.SetModels(modelsContainer);
         StartCoroutine(LoadAssetBundles());
     }
 
@@ -117,15 +118,10 @@ public class ModelManager : MonoBehaviour
             {
                 GameObject go = Instantiate(prefab);
                 go.name = prefab.name;
-                go.transform.position = GetRandomPosition();
+                go.transform.position = Vector3.zero;
             }
         }
 
         bundle.Unload(false);
-    }
-
-    private Vector3 GetRandomPosition()
-    {
-        return new Vector3(UnityEngine.Random.Range(-5f, 5f), 0, UnityEngine.Random.Range(-5f, 5f));
     }
 }
