@@ -1,36 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using UnityEngine;
+using XCharts.Runtime;
 
 namespace Part_2
 {
     public class GraphRenderer : MonoBehaviour
     {
-        public LineRenderer lineRenderer;
-        public float timeScale = 1.0f;   // Масштаб времени по оси X
-        public float valueScale = 1.0f;  // Масштаб значений по оси Y
-
+        [SerializeField] private LineChart _lineChart;
         public void DrawGraph(List<SharePointDataLoader.SensorDataPoint> dataPoints)
         {
-            if (dataPoints == null || dataPoints.Count == 0 || lineRenderer == null)
+     
+            if (dataPoints == null || dataPoints.Count == 0 || _lineChart == null)
             {
                 Debug.LogWarning("No data or LineRenderer not assigned");
                 return;
             }
-            lineRenderer.enabled = true;
-            // Отсортировать точки по времени
+            _lineChart.gameObject.SetActive(true);
             var sorted = dataPoints.OrderBy(p => p.measuredAt).ToList();
-
-            lineRenderer.positionCount = sorted.Count;
-
-            DateTime baseTime = sorted[0].measuredAt;
 
             for (int i = 0; i < sorted.Count; i++)
             {
-                float x = (float)(sorted[i].measuredAt - baseTime).TotalSeconds * timeScale;
-                float y = sorted[i].value * valueScale;
-                lineRenderer.SetPosition(i, new Vector3(x, y, 0));
+                var y = sorted[i].value ;
+                _lineChart.AddXAxisData(sorted[i].measuredAt.ToString("dd/M/yyyy", CultureInfo.InvariantCulture));
+                _lineChart.AddYAxisData(y.ToString());
+                _lineChart.AddData(0,y);
             }
         }
     }
