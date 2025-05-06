@@ -68,7 +68,7 @@ namespace Part_1
             {
                 if (model.HotObjects.Length > 0)
                 {
-                    string assetBundleUrl = null;
+                    string assetBundleUrl;
 
 #if UNITY_IOS
                 assetBundleUrl = model.MiHubCreatorModel0.AssetBundleIosUrl;
@@ -108,7 +108,7 @@ namespace Part_1
 
         private void LoadAssetsFromBundle(AssetBundle bundle)
         {
-            if (bundle == null)
+            if (!bundle)
             {
                 return;
             }
