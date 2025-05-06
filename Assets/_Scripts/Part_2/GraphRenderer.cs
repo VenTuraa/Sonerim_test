@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using UnityEngine;
@@ -10,23 +9,24 @@ namespace Part_2
     public class GraphRenderer : MonoBehaviour
     {
         [SerializeField] private LineChart _lineChart;
-        public void DrawGraph(List<SharePointDataLoader.SensorDataPoint> dataPoints)
+
+        public void DrawGraph(List<SensorDataPoint> dataPoints)
         {
-     
             if (dataPoints == null || dataPoints.Count == 0 || _lineChart == null)
             {
-                Debug.LogWarning("No data or LineRenderer not assigned");
+                Debug.LogWarning("No data or LineChart not assigned");
                 return;
             }
+
             _lineChart.gameObject.SetActive(true);
             var sorted = dataPoints.OrderBy(p => p.measuredAt).ToList();
-
-            for (int i = 0; i < sorted.Count; i++)
+            _lineChart.EnsureChartComponent<Title>().text = "Boiler Chart";
+            foreach (SensorDataPoint t in sorted)
             {
-                var y = sorted[i].value ;
-                _lineChart.AddXAxisData(sorted[i].measuredAt.ToString("dd/M/yyyy", CultureInfo.InvariantCulture));
+                float y = t.value;
+                _lineChart.AddXAxisData(t.measuredAt.ToString("dd/M/yyyy", CultureInfo.InvariantCulture));
                 _lineChart.AddYAxisData(y.ToString());
-                _lineChart.AddData(0,y);
+                _lineChart.AddData(0, y);
             }
         }
     }

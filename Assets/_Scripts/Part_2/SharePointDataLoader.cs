@@ -8,18 +8,29 @@ using System;
 
 namespace Part_2
 {
-    public class SharePointDataLoader : MonoBehaviour
+    [Serializable]
+    public class SensorDataPoint
     {
-        private string siteId = "5915e86b-3030-4cfc-b75e-98dbbd9f62f3";
-        private string listCategoriesId = "4a1b5f21-e5b3-40e9-8a89-8a9976ce2e07";
-        private string listValuesId = "79081308-168e-41e4-96fd-7062ae6c9c9a";
+        public float value;
+        public DateTime measuredAt;
 
-        public async UniTask<List<SensorDataPoint>> LoadAndPrepareSensorData(string azurerToken, CancellationToken token)
+        public SensorDataPoint(float val, DateTime time)
         {
-            var categoriesJson = await GetListItemsAsync(azurerToken, siteId, listCategoriesId, token);
-            var valuesJson = await GetListItemsAsync(azurerToken, siteId, listValuesId, token);
+            value = val;
+            measuredAt = time;
+        }
+    }
 
-            var categories = ParseItems(categoriesJson);
+    public class SharePointDataLoader
+    {
+        private const string SITE_ID = "5915e86b-3030-4cfc-b75e-98dbbd9f62f3";
+        private const string LIST_VALUES_ID = "79081308-168e-41e4-96fd-7062ae6c9c9a";
+
+        public async UniTask<List<SensorDataPoint>> LoadAndPrepareSensorData(string azurerToken,
+            CancellationToken token)
+        {
+            var valuesJson = await GetListItemsAsync(azurerToken, SITE_ID, LIST_VALUES_ID, token);
+
             var values = ParseItems(valuesJson);
 
             List<SensorDataPoint> result = new();
@@ -49,7 +60,8 @@ namespace Part_2
             return result;
         }
 
-        private async UniTask<JArray> GetListItemsAsync(string azurerToken, string siteId, string listId, CancellationToken token)
+        private async UniTask<JArray> GetListItemsAsync(string azurerToken, string siteId, string listId,
+            CancellationToken token)
         {
             string url = $"https://graph.microsoft.com/v1.0/sites/{siteId}/lists/{listId}/items?expand=fields";
 
@@ -60,7 +72,7 @@ namespace Part_2
             if (request.result == UnityWebRequest.Result.Success)
             {
                 var json = JObject.Parse(request.downloadHandler.text);
-                return (JArray)json["value"];
+                return (JArray) json["value"];
             }
             else
             {
@@ -75,19 +87,6 @@ namespace Part_2
             foreach (var item in items)
                 result.Add(item);
             return result;
-        }
-
-        [Serializable]
-        public class SensorDataPoint
-        {
-            public float value;
-            public DateTime measuredAt;
-
-            public SensorDataPoint(float val, DateTime time)
-            {
-                value = val;
-                measuredAt = time;
-            }
         }
     }
 }

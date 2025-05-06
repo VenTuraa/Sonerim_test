@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Part_2
 {
@@ -15,18 +13,18 @@ namespace Part_2
     {
         [SerializeField] private EmailPopup _emailPopup;
         [SerializeField] private InsertCodePopup _insertCodePopup;
-        [SerializeField] private SharePointDataLoader _sharePointDataLoader;
         [SerializeField] private GraphRenderer _graphRenderer;
 
         private NetworkRequestController _networkRequestController;
-        private readonly CancellationTokenSource _sourceToken = new();
         private PopupBase _currentPopup;
         private string _cachedEmail;
-        private string _azurerToken;
+        private SharePointDataLoader _sharePointDataLoader;
+
 
         private void Awake()
         {
             SetState(ViewSate.GetCode);
+            _sharePointDataLoader = new SharePointDataLoader();
             _networkRequestController = new NetworkRequestController();
             _emailPopup.OnClickGetCode += OnClickGetCode;
             _insertCodePopup.OnLoginButtonClicked += OnLoginButtonClicked;
@@ -34,19 +32,21 @@ namespace Part_2
 
         private async void OnLoginButtonClicked(string code)
         {
-            var response = await _networkRequestController.InsertCodeAsync(_cachedEmail, code, _sourceToken.Token);
+            var response =
+                await _networkRequestController.InsertCodeAsync(_cachedEmail, code, destroyCancellationToken);
             if (!string.IsNullOrEmpty(response))
             {
-                _azurerToken = await _networkRequestController.GetAzureTokenAsync(response, _sourceToken.Token);
-                var data = await _sharePointDataLoader.LoadAndPrepareSensorData(_azurerToken, _sourceToken.Token);
-                
+                var _azurerToken =
+                    await _networkRequestController.GetAzureTokenAsync(response, destroyCancellationToken);
+                var data = await _sharePointDataLoader.LoadAndPrepareSensorData(_azurerToken, destroyCancellationToken);
+
                 _graphRenderer.DrawGraph(data);
             }
         }
 
         private async void OnClickGetCode(string email)
         {
-            var response = await _networkRequestController.GetBridgerEmailCodeAsync(email, _sourceToken.Token);
+            var response = await _networkRequestController.GetBridgerEmailCodeAsync(email, destroyCancellationToken);
             if (response)
             {
                 SetState(ViewSate.InsertCode);
@@ -72,8 +72,8 @@ namespace Part_2
 
         private void OnDestroy()
         {
-            _sourceToken?.Cancel();
-            _sourceToken?.Dispose();
+            _emailPopup.OnClickGetCode -= OnClickGetCode;
+            _insertCodePopup.OnLoginButtonClicked -= OnLoginButtonClicked;
         }
     }
 }

@@ -44,11 +44,11 @@ namespace Part_1
 
     public class AssetLoader : MonoBehaviour
     {
-        private ModelsContainer modelsContainer;
+        private const string BASE_URL = "https://appdev.virtualviewing.co.uk/developer_test_2025/";
+
+        private ModelsContainer _modelsContainer;
         [SerializeField] private HotObjectHighlighter highlighter;
         [TextArea(5, 20)] public string json;
-
-        public string baseUrl = "https://appdev.virtualviewing.co.uk/developer_test_2025/";
 
         void Start()
         {
@@ -57,14 +57,14 @@ namespace Part_1
 
         private void LoadJSON(string jsonText)
         {
-            modelsContainer = JsonConvert.DeserializeObject<ModelsContainer>(jsonText);
-            highlighter.SetModels(modelsContainer);
+            _modelsContainer = JsonConvert.DeserializeObject<ModelsContainer>(jsonText);
+            highlighter.SetModels(_modelsContainer);
             StartCoroutine(LoadAssetBundles());
         }
 
         private IEnumerator LoadAssetBundles()
         {
-            foreach (var model in modelsContainer.Models)
+            foreach (var model in _modelsContainer.Models)
             {
                 if (model.HotObjects.Length > 0)
                 {
@@ -73,8 +73,8 @@ namespace Part_1
 #if UNITY_IOS
                 assetBundleUrl = model.MiHubCreatorModel0.AssetBundleIosUrl;
 #elif UNITY_ANDROID
-                assetBundleUrl = model.MiHubCreatorModel0.AssetBundleAndroidUrl;
-#elif UNITY_STANDALONE_WIN || UNITY_EDITOR
+                    assetBundleUrl = model.MiHubCreatorModel0.AssetBundleAndroidUrl;
+#elif UNITY_STANDALONE_WIN 
                     assetBundleUrl = model.MiHubCreatorModel0.AssetBundleWindowsUrl;
 #elif UNITY_WEBGL
                 assetBundleUrl = model.MiHubCreatorModel0.AssetBundleWebGLUrl;
@@ -88,21 +88,19 @@ namespace Part_1
                         continue;
                     }
 
-                    string fullUrl = baseUrl + assetBundleUrl;
+                    string fullUrl = BASE_URL + assetBundleUrl;
 
-                    using (UnityWebRequest uwr = UnityWebRequestAssetBundle.GetAssetBundle(fullUrl))
+                    using UnityWebRequest uwr = UnityWebRequestAssetBundle.GetAssetBundle(fullUrl);
+                    yield return uwr.SendWebRequest();
+
+                    if (uwr.result != UnityWebRequest.Result.Success)
                     {
-                        yield return uwr.SendWebRequest();
-
-                        if (uwr.result != UnityWebRequest.Result.Success)
-                        {
-                            Debug.LogError($"Load error: {uwr.error}");
-                        }
-                        else
-                        {
-                            AssetBundle bundle = DownloadHandlerAssetBundle.GetContent(uwr);
-                            LoadAssetsFromBundle(bundle);
-                        }
+                        Debug.LogError($"Load error: {uwr.error}");
+                    }
+                    else
+                    {
+                        AssetBundle bundle = DownloadHandlerAssetBundle.GetContent(uwr);
+                        LoadAssetsFromBundle(bundle);
                     }
                 }
             }
